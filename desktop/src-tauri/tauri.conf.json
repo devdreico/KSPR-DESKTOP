@@ -1,1 +1,28 @@
-{"productName":"KSPR","version":"0.1.0","identifier":"online.presentto.kspr","build":{"frontendDist":"../../dist","devUrl":"http://localhost:5173"},"app":{"windows":[{"title":"KSPR Desktop","width":1440,"height":920,"resizable":true}],"security":{"csp":null}},"bundle":{"active":true,"targets":["deb","nsis"],"icon":["../../desktop-app-icon.png"],"externalBin":["binaries/kspr-runtime"]}}
+{
+  "productName": "KSPR",
+  "version": "0.1.0",
+  "identifier": "online.presentto.kspr",
+  "build": {
+    "frontendDist": "../../dist",
+    "devUrl": "http://localhost:5173"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "KSPR Desktop",
+        "width": 1440,
+        "height": 920,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["deb", "nsis"],
+    "icon": ["../../desktop-app-icon.png"],
+    "externalBin": ["binaries/kspr-runtime"]
+  }
+}
