@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "kspr-ai"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "httpx>=0.27.0",
+  "pydantic>=2.8.0",
+  "pydantic-settings>=2.4.0",
+]
+[project.scripts]
+kspr = "kspr_runtime:main"
+[tool.setuptools]
+py-modules = ["kspr_runtime"]
+[tool.setuptools.packages.find]
+where = ["backend"]
+include = ["kspr_engine*"]
