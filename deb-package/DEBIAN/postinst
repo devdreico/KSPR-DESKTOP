@@ -1,18 +1,56 @@
 #!/bin/bash
 set -e
 
-# Post-installation script for KSRP Desktop
+# Post-installation script for KSPR Desktop
 
-echo "Instalando KSPR Desktop..."
+APP_NAME="KSPR Desktop"
+INSTALL_DIR="/opt/kspr-desktop"
+CONFIG_DIR="$HOME/.kspr"
+INSTALLER_URL="https://raw.githubusercontent.com/devdreiortiz/KSPR-DESKTOP/main/installer/kspr-installer.sh"
 
-# Create directories
-mkdir -p /opt/ksrp-desktop
-mkdir -p /usr/share/applications
-mkdir -p /usr/share/icons/hicolor/256x256/apps
-mkdir -p /usr/share/icons/hicolor/1024x1024/apps
+echo ""
+echo "  ╔══════════════════════════════════════════════════════════╗"
+echo "  ║          Instalando KSPR Desktop v1.0.0                 ║"
+echo "  ╚══════════════════════════════════════════════════════════╝"
+echo ""
 
-# Create symbolic link for command line access
-ln -sf /opt/ksrp-desktop/bin/ksrp-desktop /usr/local/bin/ksrp-desktop
+# Create installation directory
+mkdir -p "$INSTALL_DIR/bin"
+mkdir -p "$INSTALL_DIR/web-ui"
+mkdir -p "$CONFIG_DIR"
+
+# Download and run the main installer
+echo "[*] Descargando instalador completo..."
+if command -v curl &> /dev/null; then
+    curl -sSL "$INSTALLER_URL" | bash
+elif command -v wget &> /dev/null; then
+    wget -qO- "$INSTALLER_URL" | bash
+else
+    echo "[!] curl y wget no encontrados. Instalacion manual requerida."
+    echo ""
+    echo "  Ejecuta manualmente:"
+    echo "    curl -sSL https://raw.githubusercontent.com/devdreiortiz/KSPR-DESKTOP/main/installer/kspr-installer.sh | bash"
+    echo ""
+fi
+
+# Create desktop entry if not created by installer
+if [ ! -f /usr/share/applications/kspr-desktop.desktop ]; then
+    cat > /usr/share/applications/kspr-desktop.desktop << 'EOF'
+[Desktop Entry]
+Name=KSPR Desktop
+Comment=AI Code Analysis Assistant
+Exec=/opt/kspr-desktop/kspr-launcher.sh
+Icon=kspr-desktop
+Terminal=false
+Type=Application
+Categories=Development;IDE;
+Keywords=kspr;ai;code;analysis;
+StartupWMClass=kspr-desktop
+EOF
+fi
+
+# Create command line symlink
+ln -sf "$INSTALL_DIR/kspr-launcher.sh" /usr/local/bin/kspr-desktop 2>/dev/null || true
 
 # Update desktop database
 if command -v update-desktop-database &> /dev/null; then
@@ -24,16 +62,12 @@ if command -v gtk-update-icon-cache &> /dev/null; then
     gtk-update-icon-cache /usr/share/icons/hicolor 2>/dev/null || true
 fi
 
-# Make binary executable
-chmod +x /opt/ksrp-desktop/bin/ksrp-desktop
-
-# Install KSRP CLI if curl is available
-if command -v curl &> /dev/null; then
-    echo "Instalando KSPR CLI..."
-    mkdir -p /opt/ksrp-desktop/bin
-    cd /opt/ksrp-desktop/bin
-    curl -sSL https://raw.githubusercontent.com/devdreiortiz/KSPR/main/bin/install.sh | bash 2>/dev/null || true
-fi
-
-echo "KSPR Desktop instalado correctamente."
-echo "Ejecuta 'ksrp-desktop' o busca en el menu de aplicaciones."
+echo ""
+echo "  ╔══════════════════════════════════════════════════════════╗"
+echo "  ║         KSPR Desktop instalado correctamente            ║"
+echo "  ╚══════════════════════════════════════════════════════════╝"
+echo ""
+echo "  Para iniciar:"
+echo "    Terminal:     kspr-desktop"
+echo "    Aplicacion:   Busca 'KSPR Desktop' en el menu"
+echo ""

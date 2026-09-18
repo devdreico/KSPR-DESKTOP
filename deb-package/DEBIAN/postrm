@@ -1,16 +1,34 @@
 #!/bin/bash
 set -e
 
-# Post-removal script for KSRP Desktop
+# Post-removal script for KSPR Desktop
+
+echo ""
+echo "  Limpiando KSPR Desktop..."
+echo ""
 
 # Remove installation directory
-rm -rf /opt/ksrp-desktop
+rm -rf /opt/kspr-desktop
 
-# Remove desktop file
-rm -f /usr/share/applications/ksrp-desktop.desktop
+# Remove configuration directory
+rm -rf "$HOME/.kspr"
 
 # Remove icons
-rm -f /usr/share/icons/hicolor/256x256/apps/ksrp-desktop.png
-rm -f /usr/share/icons/hicolor/1024x1024/apps/ksrp-desktop.png
+rm -f /usr/share/icons/hicolor/256x256/apps/kspr-desktop.png
+rm -f /usr/share/icons/hicolor/1024x1024/apps/kspr-desktop.png
 
-echo "KSPR Desktop removido completamente."
+# Remove any temp files
+rm -rf /tmp/kspr-*
+
+# Update desktop database
+if command -v update-desktop-database &> /dev/null; then
+    update-desktop-database /usr/share/applications 2>/dev/null || true
+fi
+
+# Update icon cache
+if command -v gtk-update-icon-cache &> /dev/null; then
+    gtk-update-icon-cache /usr/share/icons/hicolor 2>/dev/null || true
+fi
+
+echo "  KSPR Desktop removido completamente."
+echo ""

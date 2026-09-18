@@ -1,12 +1,21 @@
 #!/bin/bash
 set -e
 
-# Pre-removal script for KSRP Desktop
+# Pre-removal script for KSPR Desktop
 
-echo "Desinstalando KSPR Desktop..."
+echo ""
+echo "  Desinstalando KSPR Desktop..."
+echo ""
+
+# Stop running processes
+pkill -f "kspr-desktop" 2>/dev/null || true
+pkill -f "kspr-launcher" 2>/dev/null || true
 
 # Remove symbolic link
-rm -f /usr/local/bin/ksrp-desktop
+rm -f /usr/local/bin/kspr-desktop
+
+# Remove desktop entry
+rm -f /usr/share/applications/kspr-desktop.desktop
 
 # Update desktop database
 if command -v update-desktop-database &> /dev/null; then
@@ -18,4 +27,5 @@ if command -v gtk-update-icon-cache &> /dev/null; then
     gtk-update-icon-cache /usr/share/icons/hicolor 2>/dev/null || true
 fi
 
-echo "KSPR Desktop desinstalado."
+echo "  KSPR Desktop desinstalado."
+echo ""
