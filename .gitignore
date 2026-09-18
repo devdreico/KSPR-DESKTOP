@@ -1,10 +1,30 @@
-# Archivos de sistema
+# Build directories
+build/
+cmake-build-*/
+out/
+
+# Qt generated files
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+*.moc
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
 .DS_Store
 Thumbs.db
 
-# Archivos temporales
-*.tmp
-*.temp
+# Compiled files
+*.o
+*.obj
+*.exe
+*.out
 
-# Archivos de log
-*.log
+# KSPR CLI (installed at runtime)
+bin/
