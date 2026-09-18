@@ -8,13 +8,17 @@ echo "  Desinstalando KSPR Desktop..."
 echo ""
 
 # Stop running processes
+echo "[*] Deteniendo procesos..."
 pkill -f "kspr-desktop" 2>/dev/null || true
 pkill -f "kspr-launcher" 2>/dev/null || true
+pkill -f "kspr serve" 2>/dev/null || true
 
 # Remove symbolic link
+echo "[*] Removiendo enlaces simbolicos..."
 rm -f /usr/local/bin/kspr-desktop
 
 # Remove desktop entry
+echo "[*] Removiendo entrada de escritorio..."
 rm -f /usr/share/applications/kspr-desktop.desktop
 
 # Update desktop database

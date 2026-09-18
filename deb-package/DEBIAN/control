@@ -3,24 +3,23 @@ Version: 1.0.0
 Section: devel
 Priority: optional
 Architecture: amd64
-Depends: curl, wget, libgtk-3-0t64 | libgtk-3-0
-Recommends: python3 | python3-minimal, nodejs
-Installed-Size: 2048
+Depends: curl, wget, libgtk-3-0t64 | libgtk-3-0, libglib2.0-0t64 | libglib2.0-0
+Recommends: python3 (>= 3.8), nodejs (>= 16), xdg-utils
+Suggests: libqt6widgets6t64 | libqt6widgets6
+Installed-Size: 5120
 Maintainer: KSRP Team <dev@ksrp.dev>
-Description: KSPR Desktop - AI Code Analysis Assistant Installer
+Homepage: https://github.com/devdreiortiz/KSPR-DESKTOP
+Description: KSPR Desktop - AI Code Analysis Assistant
  KSPR Desktop is a graphical interface for the KSPR CLI,
  an AI-powered code analysis assistant.
- .
- This package installs the complete application including:
- - Qt6 native desktop application
- - React web interface
- - KSPR CLI backend
- - Auto-configuration on first run
  .
  Features include:
  - AI Chat with KSPR I assistant
  - File management and code ingestion
  - Real-time metrics dashboard
  - Glassmorphism UI design
+ - Native Qt6 desktop application
+ - Web-based interface fallback
  .
- After installation, run 'kspr-desktop' to start.
+ After installation, run 'kspr-desktop' to start the application.
+ The first run will automatically download and configure all components.

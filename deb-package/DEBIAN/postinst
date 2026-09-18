@@ -6,68 +6,93 @@ set -e
 APP_NAME="KSPR Desktop"
 INSTALL_DIR="/opt/kspr-desktop"
 CONFIG_DIR="$HOME/.kspr"
-INSTALLER_URL="https://raw.githubusercontent.com/devdreiortiz/KSPR-DESKTOP/main/installer/kspr-installer.sh"
 
 echo ""
 echo "  ╔══════════════════════════════════════════════════════════╗"
-echo "  ║          Instalando KSPR Desktop v1.0.0                 ║"
+echo "  ║          Instalando $APP_NAME v1.0.0              ║"
 echo "  ╚══════════════════════════════════════════════════════════╝"
 echo ""
 
-# Create installation directory
+# Create directories
+echo "[*] Creando directorios..."
 mkdir -p "$INSTALL_DIR/bin"
 mkdir -p "$INSTALL_DIR/web-ui"
 mkdir -p "$CONFIG_DIR"
+mkdir -p "$CONFIG_DIR/logs"
 
-# Download and run the main installer
-echo "[*] Descargando instalador completo..."
-if command -v curl &> /dev/null; then
-    curl -sSL "$INSTALLER_URL" | bash
-elif command -v wget &> /dev/null; then
-    wget -qO- "$INSTALLER_URL" | bash
-else
-    echo "[!] curl y wget no encontrados. Instalacion manual requerida."
-    echo ""
-    echo "  Ejecuta manualmente:"
-    echo "    curl -sSL https://raw.githubusercontent.com/devdreiortiz/KSPR-DESKTOP/main/installer/kspr-installer.sh | bash"
-    echo ""
+# Set permissions
+echo "[*] Configurando permisos..."
+chmod 755 "$INSTALL_DIR"
+chmod 755 "$INSTALL_DIR/bin"
+chmod 755 "$INSTALL_DIR/web-ui"
+chmod 755 "$INSTALL_DIR/kspr-launcher.sh" 2>/dev/null || true
+
+# Make launcher executable
+if [ -f "$INSTALL_DIR/kspr-launcher.sh" ]; then
+    chmod +x "$INSTALL_DIR/kspr-launcher.sh"
 fi
 
-# Create desktop entry if not created by installer
-if [ ! -f /usr/share/applications/kspr-desktop.desktop ]; then
-    cat > /usr/share/applications/kspr-desktop.desktop << 'EOF'
-[Desktop Entry]
-Name=KSPR Desktop
-Comment=AI Code Analysis Assistant
-Exec=/opt/kspr-desktop/kspr-launcher.sh
-Icon=kspr-desktop
-Terminal=false
-Type=Application
-Categories=Development;IDE;
-Keywords=kspr;ai;code;analysis;
-StartupWMClass=kspr-desktop
-EOF
+# Make Qt app executable
+if [ -f "$INSTALL_DIR/bin/kspr-desktop" ]; then
+    chmod +x "$INSTALL_DIR/bin/kspr-desktop"
 fi
 
 # Create command line symlink
-ln -sf "$INSTALL_DIR/kspr-launcher.sh" /usr/local/bin/kspr-desktop 2>/dev/null || true
+echo "[*] Creando comando 'kspr-desktop'..."
+ln -sf "$INSTALL_DIR/kspr-launcher.sh" /usr/local/bin/kspr-desktop
+chmod +x /usr/local/bin/kspr-desktop
+
+# Create desktop entry
+echo "[*] Creando entrada de escritorio..."
+cat > /usr/share/applications/kspr-desktop.desktop << 'EOF'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=KSPR Desktop
+GenericName=AI Code Assistant
+Comment=AI-powered code analysis and assistance
+Exec=/opt/kspr-desktop/kspr-launcher.sh %F
+Icon=kspr-desktop
+Terminal=false
+Categories=Development;IDE;Programming;
+Keywords=kspr;ai;code;analysis;assistant;development;
+MimeType=text/plain;inode/directory;
+StartupNotify=true
+StartupWMClass=kspr-desktop
+Actions=new-window;
+
+[Desktop Action new-window]
+Name=New Window
+Exec=/opt/kspr-desktop/kspr-launcher.sh
+EOF
 
 # Update desktop database
+echo "[*] Actualizando base de datos de escritorio..."
 if command -v update-desktop-database &> /dev/null; then
     update-desktop-database /usr/share/applications 2>/dev/null || true
 fi
 
 # Update icon cache
+echo "[*] Actualizando cache de iconos..."
 if command -v gtk-update-icon-cache &> /dev/null; then
     gtk-update-icon-cache /usr/share/icons/hicolor 2>/dev/null || true
 fi
 
+# Update MIME database
+echo "[*] Actualizando base de datos MIME..."
+if command -v update-mime-database &> /dev/null; then
+    update-mime-database /usr/share/mime 2>/dev/null || true
+fi
+
 echo ""
 echo "  ╔══════════════════════════════════════════════════════════╗"
-echo "  ║         KSPR Desktop instalado correctamente            ║"
+echo "  ║         $APP_NAME instalado correctamente        ║"
 echo "  ╚══════════════════════════════════════════════════════════╝"
 echo ""
 echo "  Para iniciar:"
 echo "    Terminal:     kspr-desktop"
 echo "    Aplicacion:   Busca 'KSPR Desktop' en el menu"
+echo ""
+echo "  La primera vez que ejecutes, se descargaran los componentes"
+echo "  necesarios automaticamente."
 echo ""
