@@ -11,6 +11,11 @@ set(SOURCES
     dashboardpanel.cpp
     installer.cpp
     styles.cpp
+    welcomepanel.cpp
+    settingspanel.cpp
+    notificationmanager.cpp
+    loadingoverlay.cpp
+    searchbar.cpp
 )
 
 set(HEADERS
@@ -21,6 +26,11 @@ set(HEADERS
     dashboardpanel.h
     installer.h
     styles.h
+    welcomepanel.h
+    settingspanel.h
+    notificationmanager.h
+    loadingoverlay.h
+    searchbar.h
 )
 
 set(RESOURCES
