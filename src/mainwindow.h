@@ -51,6 +51,7 @@ private:
     void setupStatusBar();
     void setupWelcomePanel();
     void setupSettingsPanel();
+    void setupShortcuts();
     void connectSignals();
     void updateActiveButton(QPushButton *activeButton);
 

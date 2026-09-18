@@ -18,6 +18,7 @@
 #include <QApplication>
 #include <QPropertyAnimation>
 #include <QGraphicsDropShadowEffect>
+#include <QShortcut>
 
 MainWindow::MainWindow(const QString &cliPath, QWidget *parent)
     : QMainWindow(parent)
@@ -228,6 +229,7 @@ void MainWindow::setupUI()
     setCentralWidget(centralWidget);
 
     setupStatusBar();
+    setupShortcuts();
 
     m_notificationManager = new NotificationManager(centralWidget, this);
 }
@@ -242,6 +244,27 @@ void MainWindow::setupWelcomePanel()
 
 void MainWindow::setupSettingsPanel()
 {
+}
+
+void MainWindow::setupShortcuts()
+{
+    QShortcut *chatShortcut = new QShortcut(QKeySequence("Ctrl+1"), this);
+    connect(chatShortcut, &QShortcut::activated, this, &MainWindow::onChatClicked);
+
+    QShortcut *filesShortcut = new QShortcut(QKeySequence("Ctrl+2"), this);
+    connect(filesShortcut, &QShortcut::activated, this, &MainWindow::onFilesClicked);
+
+    QShortcut *dashboardShortcut = new QShortcut(QKeySequence("Ctrl+3"), this);
+    connect(dashboardShortcut, &QShortcut::activated, this, &MainWindow::onDashboardClicked);
+
+    QShortcut *welcomeShortcut = new QShortcut(QKeySequence("Ctrl+0"), this);
+    connect(welcomeShortcut, &QShortcut::activated, this, &MainWindow::onWelcomeClicked);
+
+    QShortcut *settingsShortcut = new QShortcut(QKeySequence("Ctrl+,"), this);
+    connect(settingsShortcut, &QShortcut::activated, this, &MainWindow::onSettingsClicked);
+
+    QShortcut *quitShortcut = new QShortcut(QKeySequence("Ctrl+Q"), this);
+    connect(quitShortcut, &QShortcut::activated, this, &MainWindow::close);
 }
 
 void MainWindow::setupStatusBar()
