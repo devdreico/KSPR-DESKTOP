@@ -1,0 +1,39 @@
+#!/bin/bash
+set -e
+
+# Post-installation script for KSRP Desktop
+
+echo "Instalando KSPR Desktop..."
+
+# Create directories
+mkdir -p /opt/ksrp-desktop
+mkdir -p /usr/share/applications
+mkdir -p /usr/share/icons/hicolor/256x256/apps
+mkdir -p /usr/share/icons/hicolor/1024x1024/apps
+
+# Create symbolic link for command line access
+ln -sf /opt/ksrp-desktop/bin/ksrp-desktop /usr/local/bin/ksrp-desktop
+
+# Update desktop database
+if command -v update-desktop-database &> /dev/null; then
+    update-desktop-database /usr/share/applications 2>/dev/null || true
+fi
+
+# Update icon cache
+if command -v gtk-update-icon-cache &> /dev/null; then
+    gtk-update-icon-cache /usr/share/icons/hicolor 2>/dev/null || true
+fi
+
+# Make binary executable
+chmod +x /opt/ksrp-desktop/bin/ksrp-desktop
+
+# Install KSRP CLI if curl is available
+if command -v curl &> /dev/null; then
+    echo "Instalando KSPR CLI..."
+    mkdir -p /opt/ksrp-desktop/bin
+    cd /opt/ksrp-desktop/bin
+    curl -sSL https://raw.githubusercontent.com/devdreiortiz/KSPR/main/bin/install.sh | bash 2>/dev/null || true
+fi
+
+echo "KSPR Desktop instalado correctamente."
+echo "Ejecuta 'ksrp-desktop' o busca en el menu de aplicaciones."

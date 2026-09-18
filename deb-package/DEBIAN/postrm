@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+
+# Post-removal script for KSRP Desktop
+
+# Remove installation directory
+rm -rf /opt/ksrp-desktop
+
+# Remove desktop file
+rm -f /usr/share/applications/ksrp-desktop.desktop
+
+# Remove icons
+rm -f /usr/share/icons/hicolor/256x256/apps/ksrp-desktop.png
+rm -f /usr/share/icons/hicolor/1024x1024/apps/ksrp-desktop.png
+
+echo "KSPR Desktop removido completamente."

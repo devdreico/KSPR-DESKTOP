@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=KSPR Desktop
+Comment=AI Code Analysis Assistant
+Exec=/opt/ksrp-desktop/ksrp-launcher.sh
+Icon=ksrp-desktop
+Terminal=false
+Type=Application
+Categories=Development;IDE;
+Keywords=ksrp;ai;code;analysis;
+StartupWMClass=ksrp-desktop
