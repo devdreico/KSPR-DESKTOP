@@ -1,9 +1,10 @@
-node_modules/
-dist/
-desktop/src-tauri/target/
-desktop/src-tauri/binaries/
-*.pyc
-__pycache__/
-.venv/
-*.egg-info/
+# Archivos de sistema
 .DS_Store
+Thumbs.db
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Archivos de log
+*.log

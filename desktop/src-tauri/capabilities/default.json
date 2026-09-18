@@ -1,1 +1,0 @@
-{"permissions":["core:default","dialog:default","shell:default",{"identifier":"shell:allow-execute","allow":[{"name":"binaries/kspr-runtime","sidecar":true,"args":true}]}]}
