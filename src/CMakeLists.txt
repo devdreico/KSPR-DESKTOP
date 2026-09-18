@@ -37,22 +37,22 @@ set(RESOURCES
     ${CMAKE_SOURCE_DIR}/resources/resources.qrc
 )
 
-qt_add_executable(ksrp-desktop
+qt_add_executable(kspr-desktop
     ${SOURCES}
     ${HEADERS}
     ${RESOURCES}
 )
 
-target_link_libraries(ksrp-desktop PRIVATE
+target_link_libraries(kspr-desktop PRIVATE
     Qt6::Widgets
     Qt6::Core
     Qt6::Network
 )
 
-set_target_properties(ksrp-desktop PROPERTIES
+set_target_properties(kspr-desktop PROPERTIES
     WIN32_EXECUTABLE ON
     MACOSX_BUNDLE ON
-    MACOSX_BUNDLE_GUI_IDENTIFIER "com.ksrp.desktop"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "com.kspr.desktop"
     MACOSX_BUNDLE_BUNDLE_NAME "KSPR Desktop"
     MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
     MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
@@ -60,7 +60,7 @@ set_target_properties(ksrp-desktop PROPERTIES
 )
 
 if(APPLE)
-    set_target_properties(ksrp-desktop PROPERTIES
+    set_target_properties(kspr-desktop PROPERTIES
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/resources/Info.plist.in"
     )
 endif()

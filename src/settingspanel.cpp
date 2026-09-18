@@ -368,7 +368,7 @@ QWidget *SettingsPanel::createAdvancedSection()
     );
 
     m_logPathEdit = new QLineEdit(content);
-    m_logPathEdit->setPlaceholderText(QDir::homePath() + "/.ksrp/logs");
+    m_logPathEdit->setPlaceholderText(QDir::homePath() + "/.kspr/logs");
     m_logPathEdit->setMinimumHeight(36);
     m_logPathEdit->setStyleSheet(
         "QLineEdit {"
@@ -402,7 +402,7 @@ void SettingsPanel::loadSettings()
     m_autoStartCheck->setChecked(settings.value("autoStart", true).toBool());
     m_notificationsCheck->setChecked(settings.value("notifications", true).toBool());
     m_loggingCheck->setChecked(settings.value("logging", false).toBool());
-    m_logPathEdit->setText(settings.value("logPath", QDir::homePath() + "/.ksrp/logs").toString());
+    m_logPathEdit->setText(settings.value("logPath", QDir::homePath() + "/.kspr/logs").toString());
 }
 
 void SettingsPanel::saveSettings()
@@ -441,5 +441,5 @@ void SettingsPanel::onResetClicked()
     m_autoStartCheck->setChecked(true);
     m_notificationsCheck->setChecked(true);
     m_loggingCheck->setChecked(false);
-    m_logPathEdit->setText(QDir::homePath() + "/.ksrp/logs");
+    m_logPathEdit->setText(QDir::homePath() + "/.kspr/logs");
 }

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(ksrp-desktop VERSION 1.0.0 LANGUAGES CXX)
+project(kspr-desktop VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -11,7 +11,7 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets Core Network)
 
 add_subdirectory(src)
 
-install(TARGETS ksrp-desktop
+install(TARGETS kspr-desktop
     BUNDLE DESTINATION .
     RUNTIME DESTINATION bin
 )

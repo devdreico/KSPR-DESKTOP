@@ -1,7 +1,7 @@
 #!/bin/bash
 # KSPR Desktop Launcher Script
 
-APP_DIR="/opt/ksrp-desktop"
+APP_DIR="/opt/kspr-desktop"
 WEB_DIR="$APP_DIR/web-ui"
 CLI_PATH="$APP_DIR/bin/kspr"
 
@@ -20,9 +20,9 @@ if [ -f "$CLI_PATH" ]; then
 fi
 
 # Launch Qt application or serve web UI
-if [ -f "$APP_DIR/bin/ksrp-desktop" ]; then
+if [ -f "$APP_DIR/bin/kspr-desktop" ]; then
     echo "Iniciando KSPR Desktop..."
-    "$APP_DIR/bin/ksrp-desktop" &
+    "$APP_DIR/bin/kspr-desktop" &
 else
     echo "Iniciando interfaz web..."
     if command -v python3 &> /dev/null; then
@@ -34,7 +34,7 @@ else
         npx serve -l 3000 &
         echo "Interfaz web disponible en http://localhost:3000"
     else
-        echo "Error: No se encontró Python o Node.js para servir la interfaz web"
+        echo "Error: No se encontro Python o Node.js para servir la interfaz web"
         exit 1
     fi
 fi

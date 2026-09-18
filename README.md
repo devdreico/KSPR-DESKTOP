@@ -1,43 +1,54 @@
 # KSPR Desktop
 
-Interfaz gráfica de escritorio para KSPR CLI, construida con Qt 6 y C++.
+Interfaz grafica de escritorio para KSPR CLI, construida con Qt 6, C++ y React.
 
-## Características
+## Caracteristicas
 
-- **Chat con IA**: Interactúa con KSPR I directamente desde la interfaz
-- **Gestión de archivos**: Sube y gestiona archivos para análisis
-- **Dashboard**: Visualiza métricas y estado del sistema
-- **Auto-instalación**: Detecta e instala KSPR CLI automáticamente
+- **Chat con IA**: Interactua con KSPR I directamente desde la interfaz
+- **Gestion de archivos**: Sube y gestiona archivos para analisis
+- **Dashboard**: Visualiza metricas y estado del sistema
+- **Auto-instalacion**: Detecta e instala KSPR CLI automaticamente
 
 ## Requisitos
 
-- Qt 6.x
+- Qt 6.x (para version de escritorio)
 - CMake 3.16+
 - C++17
 - Python 3.11+ (para KSPR CLI)
+- Node.js 18+ (para version web)
 
-## Compilación
+## Compilacion
 
+### Version de Escritorio (Qt6)
 ```bash
-# Crear directorio de build
 mkdir build && cd build
-
-# Configurar con CMake
 cmake ..
-
-# Compilar
 make -j$(nproc)
 ```
 
-## Ejecución
-
+### Version Web (React)
 ```bash
-./build/src/ksrp-desktop
+cd web-ui
+npm install
+npm run build
 ```
 
-## Instalación de KSPR CLI
+## Instalacion
 
-La aplicación detectará si KSPR CLI está instalado. Si no lo está, ofrecerá instalarlo automáticamente ejecutando:
+### Paquete .deb (Ubuntu/Debian)
+```bash
+sudo dpkg -i kspr-desktop_1.0.0_amd64.deb
+sudo apt-get install -f
+```
+
+### Ejecucion
+```bash
+kspr-desktop
+```
+
+## Instalacion de KSPR CLI
+
+La aplicacion detectara si KSPR CLI esta instalado. Si no lo esta, ofrecera instalarlo automaticamente ejecutando:
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/devdreiortiz/KSPR/main/bin/install.sh | bash
@@ -46,7 +57,7 @@ curl -sSL https://raw.githubusercontent.com/devdreiortiz/KSPR/main/bin/install.s
 ## Estructura del Proyecto
 
 ```
-KSRP-DESKTOP/
+KSPR-DESKTOP/
 ├── CMakeLists.txt
 ├── src/
 │   ├── main.cpp
@@ -57,11 +68,16 @@ KSRP-DESKTOP/
 │   ├── dashboardpanel.h/cpp
 │   ├── installer.h/cpp
 │   └── styles.h/cpp
+├── web-ui/
+│   ├── src/
+│   │   ├── components/
+│   │   └── store/
+│   └── dist/
 ├── resources/
 │   ├── resources.qrc
 │   ├── desktop-app-icon.png
 │   └── kspr-main-logo.png
-└── build/
+└── deb-package/
 ```
 
 ## Licencia
