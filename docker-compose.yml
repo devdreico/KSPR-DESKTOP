@@ -1,0 +1,18 @@
+services:
+  kspr:
+    build:
+      context: .
+      args:
+        VITE_API_TOKEN: ${KSPR_API_TOKEN:?Define KSPR_API_TOKEN in your environment}
+    ports:
+      - "8000:8000"
+    environment:
+      KSPR_DATA_DIR: /data
+      KSPR_ENVIRONMENT: production
+      KSPR_CORS_ORIGINS: http://localhost:8000
+      KSPR_API_TOKEN: ${KSPR_API_TOKEN:?Define KSPR_API_TOKEN in your environment}
+    volumes:
+      - kspr-data:/data
+    restart: unless-stopped
+volumes:
+  kspr-data:

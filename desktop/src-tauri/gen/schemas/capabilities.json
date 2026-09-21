@@ -1,0 +1,1 @@
+{"default":{"identifier":"default","description":"Permisos mínimos para ejecutar KSPR Desktop y su runtime local.","local":true,"windows":["main"],"permissions":["core:default","dialog:default","shell:default",{"identifier":"shell:allow-execute","allow":[{"args":true,"name":"binaries/kspr-runtime","sidecar":true}]}]}}
