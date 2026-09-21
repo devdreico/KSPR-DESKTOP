@@ -16,6 +16,8 @@ El navegador y Docker abren la interfaz web completa.
 
 Para Docker local, copia `.env.example` a `.env`, define un token aleatorio y crea el frontend con `VITE_API_TOKEN` si vas a servirlo desde un origen separado. No expongas el puerto directamente a Internet sin TLS y un proxy de autenticación.
 
+Para producción, configura también `VITE_API_URL` en el proyecto frontend de Vercel apuntando al backend HTTPS. No uses `VITE_API_TOKEN`: cualquier variable `VITE_*` queda visible en el navegador. El backend debe gestionar su autenticación con un mecanismo de sesión/proxy seguro.
+
 ```bash
 cp .env.example .env
 docker compose up --build
@@ -39,3 +41,12 @@ En otra terminal:
 npm ci
 npm run dev
 ```
+
+Para validar o empaquetar desktop:
+
+```bash
+npm run desktop:sidecar
+npm run desktop:build
+```
+
+Los tests de backend se instalan con `python -m pip install -e '.[test]'` y se ejecutan con `pytest -q`.

@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -37,6 +38,12 @@ class Settings(BaseSettings):
     api_token: str | None = None
 
     model_config = SettingsConfigDict(env_prefix="KSPR_", env_file=".env", extra="ignore")
+
+    @model_validator(mode="after")
+    def require_production_secrets(self):
+        if self.environment.lower() in {"production", "staging"} and self.jwt_secret_key == "kspr-secret-default-key-change-in-production":
+            raise ValueError("KSPR_JWT_SECRET_KEY debe configurarse en producción")
+        return self
 
     @property
     def allowed_origins(self) -> list[str]:

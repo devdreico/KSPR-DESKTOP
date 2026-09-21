@@ -11,6 +11,7 @@ services:
       KSPR_ENVIRONMENT: production
       KSPR_CORS_ORIGINS: http://localhost:8000
       KSPR_API_TOKEN: ${KSPR_API_TOKEN:?Define KSPR_API_TOKEN in your environment}
+      KSPR_JWT_SECRET_KEY: ${KSPR_JWT_SECRET_KEY:?Define KSPR_JWT_SECRET_KEY in your environment}
     volumes:
       - kspr-data:/data
     restart: unless-stopped

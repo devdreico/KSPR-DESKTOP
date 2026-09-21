@@ -34,7 +34,9 @@ import {
   runAnalysis,
   transcribeAudio,
   listSessions,
+  getSession,
   saveSession,
+  deletePersistedSession,
   type AnalysisResult,
   type GeminiModel,
   type ProviderAuth,
@@ -81,6 +83,7 @@ type RecognitionConstructor = new () => Recognition;
 
 type CommandItem = { id: string; title: string; description: string; slash: string; shortcut?: string; template?: string };
 type PermissionMode = "ask" | "allow" | "deny";
+type RunEvent = { stage: string; message: string; progress: number; createdAt: number };
 
 const DEFAULT_MODELS: ModelOption[] = [
   { id: "kspr-local", name: "KSPR Local", description: "Modo determinista para comprobar la interfaz sin una API externa.", providerId: "local", providerName: "KSPR", variants: ["default"] },
@@ -278,6 +281,7 @@ export function Studio() {
   const [running, setRunning] = useState(false);
   const [runProgress, setRunProgress] = useState(0);
   const [runStage, setRunStage] = useState("Preparando contexto");
+  const [runEvents, setRunEvents] = useState<RunEvent[]>([]);
   const [liveResponse, setLiveResponse] = useState("");
   const [recording, setRecording] = useState(false);
   const [showReviews, setShowReviews] = useState(false);
@@ -610,29 +614,37 @@ export function Studio() {
     setSidebarOpen(true);
   }
 
-  function selectSession(session: SessionRecord) {
-    setActiveSessionId(session.id);
-    setMessages(session.messages || []);
+  async function selectSession(session: SessionRecord) {
+    let selected = session;
+    try {
+      const remote = await getSession(session.id);
+      selected = { ...session, ...remote } as SessionRecord;
+    } catch {
+      // La copia local permite seguir trabajando cuando el backend no está disponible.
+    }
+    setActiveSessionId(selected.id);
+    setMessages(selected.messages || []);
     setFiles([]);
-    setContextFiles(session.contextFiles || []);
+    setContextFiles(selected.contextFiles || []);
     setDraft("");
     setResult(null);
     setError("");
-    if (session.model) {
-      setProviderId(session.model.providerId);
-      setModelId(session.model.modelId);
+    if (selected.model) {
+      setProviderId(selected.model.providerId);
+      setModelId(selected.model.modelId);
     }
-    setModelVariant(session.variant || "default");
-    setPermissionMode(session.permissionMode || "ask");
-    localStorage.setItem("kspr_permission_mode", session.permissionMode || "ask");
-    if (session.agent) {
-      setAgentMode(session.agent);
-      localStorage.setItem("kspr_agent_mode", session.agent);
+    setModelVariant(selected.variant || "default");
+    setPermissionMode(selected.permissionMode || "ask");
+    localStorage.setItem("kspr_permission_mode", selected.permissionMode || "ask");
+    if (selected.agent) {
+      setAgentMode(selected.agent);
+      localStorage.setItem("kspr_agent_mode", selected.agent);
     }
     setSidebarOpen(window.innerWidth > 820);
   }
 
   function deleteSession(sessionId: string) {
+    void deletePersistedSession(sessionId).catch(() => undefined);
     const remaining = sessions.filter((session) => session.id !== sessionId);
     const next = remaining.length ? remaining : [newSession()];
     setSessions(next);
@@ -854,6 +866,7 @@ export function Studio() {
     setRunning(true);
     setRunProgress(0);
     setRunStage("Preparando contexto");
+    setRunEvents([{ stage: "queued", message: "Preparando contexto", progress: 0, createdAt: Date.now() }]);
     setLiveResponse("");
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
@@ -886,6 +899,7 @@ export function Studio() {
       }, authFor(selectedModel.providerId), abortController.signal, (progress) => {
         setRunProgress(progress.progress);
         setRunStage(progress.message || progress.stage);
+        setRunEvents((current) => [...current, { stage: progress.stage, message: progress.message || progress.stage, progress: progress.progress, createdAt: Date.now() }].slice(-8));
       }, (delta) => setLiveResponse((current) => current + delta));
       setResult(analysis);
       setMessages((current) => [...current, { id: id("message"), role: "assistant", meta: `${selectedModel.providerName} · ${selectedModel.name}`, content: analysis.response_text || "El modelo terminó el análisis, pero no devolvió texto visible.", createdAt: Date.now() }]);
@@ -966,12 +980,12 @@ export function Studio() {
   return (
     <div className={`app-shell app-shell-v2 ${sidebarOpen ? "sidebar-is-open" : "sidebar-is-closed"}`}>
       <aside className="session-sidebar">
-        <div className="sidebar-brand"><div className="sidebar-brand-mark" aria-hidden="true">K</div><div><strong>KSPR AI</strong><span>Inverse Engineering</span></div><button className="sidebar-icon" onClick={() => setSidebarOpen(false)} aria-label="Cerrar barra lateral"><Menu size={16} /></button></div>
+        <div className="sidebar-brand"><img src="/kspr-main-logo.png" alt="KSPR AI" /><div><strong>KSPR AI</strong><span>Inverse Engineering</span></div><button className="sidebar-icon" onClick={() => setSidebarOpen(false)} aria-label="Cerrar barra lateral"><Menu size={16} /></button></div>
         <button className="sidebar-new-session" onClick={createSession}><Plus size={15} /> Nueva sesión <span>⌘⇧S</span></button>
         <label className="session-search"><Search size={14} /><input value={sessionSearch} onChange={(event) => setSessionSearch(event.target.value)} placeholder="Buscar sesiones" /></label>
         <div className="workspace-label"><span>WORKSPACE</span><strong>kspr / empresarial</strong></div>
         <div className="session-list"><span className="session-group-label">Recientes</span>{filteredSessions.map((session) => <div className={session.id === activeSessionId ? "session-row active" : "session-row"} key={session.id}><button onClick={() => selectSession(session)}><span>{session.title}</span><small>{session.messages.length ? `${session.messages.length} mensajes` : "vacía"}</small></button>{session.id === activeSessionId && <button className="session-delete" onClick={() => deleteSession(session.id)} aria-label="Eliminar sesión"><X size={12} /></button>}</div>)}{!filteredSessions.length && <div className="session-empty">No hay sesiones que coincidan.</div>}</div>
-        <div className="sidebar-bottom"><button onClick={() => setApiHubOpen(true)}><Sparkles size={15} /><span>APIs y Modelos</span><i className={providerConnected ? "connected-dot" : ""} /></button><button onClick={() => { setCliParityCommand("plugins"); setCliParityOpen(true); }}><Terminal size={15} /><span>Comandos CLI</span><kbd>⌘K</kbd></button><button onClick={() => setConfigModalOpen(true)}><Settings2 size={15} /><span>Configuración</span><kbd>⌘,</kbd></button><div className="sidebar-agent"><div className="sidebar-agent-mark" aria-hidden="true">K</div><span><strong>{agentMode}</strong><small>Agente activo</small></span><ChevronDown size={13} /></div></div>
+        <div className="sidebar-bottom"><button onClick={() => setApiHubOpen(true)}><Sparkles size={15} /><span>APIs y Modelos</span><i className={providerConnected ? "connected-dot" : ""} /></button><button onClick={() => { setCliParityCommand("plugins"); setCliParityOpen(true); }}><Terminal size={15} /><span>Comandos CLI</span><kbd>⌘K</kbd></button><button onClick={() => setConfigModalOpen(true)}><Settings2 size={15} /><span>Configuración</span><kbd>⌘,</kbd></button><div className="sidebar-agent"><img src="/kspr-main-logo.png" alt="" /><span><strong>{agentMode}</strong><small>Agente activo</small></span><ChevronDown size={13} /></div></div>
       </aside>
       {sidebarOpen && <button className="mobile-sidebar-overlay" onClick={() => setSidebarOpen(false)} aria-label="Cerrar barra lateral" />}
 
@@ -981,7 +995,7 @@ export function Studio() {
         <main className="chat-page workspace-chat-page"><section className={hasConversation ? "chat-shell has-conversation" : "chat-shell"}><div className="conversation">
           {!hasConversation && <div className="welcome"><span className="eyebrow">KSPR AI · INVERSE ENGINEERING ENGINE</span><h1>¿Qué quieres <em>entender?</em></h1><p>Descompón sistemas, procesos, objetos o conceptos con evidencia, nodos de contexto y reconstrucciones trazables.</p><div className="starter-prompts">{starterPrompts.map((prompt) => <button key={prompt} onClick={() => setDraft(prompt)}>{prompt}<span>↗</span></button>)}</div></div>}
           {messages.map((message) => <article className={message.role === "user" ? "chat-message user-message" : "chat-message assistant-message"} key={message.id}><div className="message-body">{message.role === "assistant" && <div className="message-meta"><strong>KSPR I</strong><span>{message.meta}</span></div>}<div className="message-content">{message.role === "assistant" ? <MessageContent content={message.content} /> : message.content}</div>{message.files && message.files.length > 0 && <div className="message-files">{message.files.map((file) => <span key={file}><FileText size={13} />{file}</span>)}</div>}{message.role === "assistant" && <div className="message-actions"><button type="button" onClick={() => void copyMessage(message)}>{copiedMessageId === message.id ? <Check size={12} /> : <FileText size={12} />}{copiedMessageId === message.id ? "Copiado" : "Copiar"}</button></div>}</div></article>)}
-          {running && <article className="chat-message assistant-message"><div className="message-body loading-message"><div className="message-meta"><strong>KSPR I</strong><span>{selectedModel?.name} · {runProgress}%</span></div>{liveResponse && <div className="streaming-preview"><MessageContent content={liveResponse} /></div>}<span><LoaderCircle size={15} className="spin" /> {runStage}...</span></div></article>}
+          {running && <article className="chat-message assistant-message"><div className="message-body loading-message"><div className="message-meta"><strong>KSPR I</strong><span>{selectedModel?.name} · {runProgress}%</span></div>{liveResponse && <div className="streaming-preview"><MessageContent content={liveResponse} /></div>}<div className="execution-timeline" aria-live="polite">{runEvents.slice(-4).map((event, index) => <div className={index === runEvents.slice(-4).length - 1 ? "execution-event current" : "execution-event"} key={`${event.createdAt}-${event.stage}`}><span className="execution-event-dot" /><span>{event.message}</span><strong>{event.progress}%</strong></div>)}</div><span><LoaderCircle size={15} className="spin" /> {runStage}...</span></div></article>}
           {result && !running && showReviews && <details className="package-drawer" open><summary><Sparkles size={15} /> Paquete de contexto generado <span>{result.artifacts.length} Markdown/JSON</span></summary><ArtifactPanel artifacts={result.artifacts} /></details>}
         </div>
 

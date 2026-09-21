@@ -550,6 +550,12 @@ button:not(:disabled):hover { transform: translateY(-1px); }
 }
 .assistant-message .message-files span { border-color: var(--line); color: var(--muted); }
 .loading-message { color: var(--muted); }
+.execution-timeline { display: grid; gap: 7px; margin: 14px 0 10px; padding: 10px 12px; border: 1px solid var(--line); background: rgba(243, 242, 238, .62); }
+.execution-event { display: grid; grid-template-columns: 7px 1fr auto; gap: 8px; align-items: center; color: var(--soft); font: 10px "DM Mono", monospace; }
+.execution-event.current { color: var(--ink); }
+.execution-event-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--soft); }
+.execution-event.current .execution-event-dot { background: #6b806d; box-shadow: 0 0 0 3px rgba(107, 128, 109, .14); }
+.execution-event strong { color: inherit; font-weight: 500; }
 .loading-message > span { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .spin { animation: spin .9s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

@@ -92,6 +92,16 @@ class JobStatus(BaseModel):
     error: str | None = None
 
 
+class SessionEvent(BaseModel):
+    type: str
+    session_id: str | None = None
+    message_id: str | None = None
+    tool: str | None = None
+    status: str | None = None
+    progress: int | None = Field(default=None, ge=0, le=100)
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+
 class UserRegisterRequest(BaseModel):
     username: str = Field(min_length=3, max_length=50)
     email: str = Field(min_length=5, max_length=100)

@@ -12,6 +12,7 @@ import tempfile
 import zipfile
 import sqlite3
 import ipaddress
+from kspr_engine.network import validate_public_http_url
 from urllib.parse import urlparse
 from pathlib import Path
 
@@ -24,7 +25,7 @@ from fastapi.staticfiles import StaticFiles
 sys.path.insert(0, str(Path(__file__).resolve().parent / "backend"))
 from kspr_engine.analyzer import analyze
 from kspr_engine.config import Settings
-from kspr_engine.models import AnalysisRequest, JobStatus, MCPServerConfig
+from kspr_engine.models import AnalysisRequest, JobStatus, MCPServerConfig, SessionEvent
 from kspr_engine.inverse_engineering import InverseEngineeringRequest, reconstruct
 from kspr_engine.providers import GeminiProvider, ProviderError, get_provider
 from kspr_engine.decompiler import DecompilerEngine
@@ -36,6 +37,8 @@ from kspr_engine.license_service import license_count, normalize_code, verify_li
 ALLOWED = {".py", ".js", ".jsx", ".ts", ".tsx", ".cs", ".java", ".sql", ".html", ".vue", ".php", ".md", ".txt", ".json", ".yaml", ".yml", ".css", ".scss", ".go", ".rs", ".rb", ".java", ".kt", ".sh", ".xml", ".csv"}
 MAX_FILE = 2_000_000
 MAX_ARCHIVE = 25_000_000
+MAX_UPLOAD_FILES = 200
+MAX_UPLOAD_TOTAL = 50_000_000
 DESKTOP_TOKEN = os.getenv("KSPR_API_TOKEN", "").strip()
 LICENSE_UNLOCKED = False
 LICENSE_FAILURES: dict[str, tuple[int, float]] = {}
@@ -224,7 +227,7 @@ async def ingest_path(payload: dict):
 
 @app.post("/api/v1/ingest/archive", dependencies=[Depends(require_desktop_token)])
 async def ingest_archive(file: UploadFile = File(...)):
-    try: files = collect_zip(await file.read())
+    try: files = collect_zip(await file.read(MAX_ARCHIVE + 1))
     except (zipfile.BadZipFile, ValueError) as exc: raise HTTPException(400, str(exc)) from exc
     return {"files": files, "count": len(files), "source": "zip"}
 
@@ -233,11 +236,17 @@ async def ingest_archive(file: UploadFile = File(...)):
 async def ingest_files(files: list[UploadFile] = File(...)):
     """Previsualiza varios archivos manteniendo la misma regla de lectura segura que la CLI."""
     result: list[dict[str, str]] = []
-    for file in files:
+    total = 0
+    for file in files[:MAX_UPLOAD_FILES]:
         name = (file.filename or "").replace("\\", "/")
         if name.startswith("/") or ".." in name.split("/") or Path(name).suffix.lower() not in ALLOWED:
             continue
-        raw = (await file.read())[:MAX_FILE]
+        raw = await file.read(MAX_FILE + 1)
+        if len(raw) > MAX_FILE:
+            raise HTTPException(413, "Cada archivo está limitado a 2 MB")
+        total += len(raw)
+        if total > MAX_UPLOAD_TOTAL:
+            raise HTTPException(413, "La carga total supera el límite de 50 MB")
         result.append({"path": name, "content": raw.decode("utf-8", errors="replace")})
     return {"files": result, "count": len(result), "source": "files"}
 
@@ -246,8 +255,10 @@ async def ingest_files(files: list[UploadFile] = File(...)):
 async def ingest_git(payload: dict):
     """Clona un repositorio Git temporalmente y devuelve solo evidencia textual."""
     url = str(payload.get("url", "")).strip()
-    if not url or not (url.startswith("https://") or url.startswith("http://") or url.startswith("git@")):
-        raise HTTPException(400, "La URL Git no es válida")
+    try:
+        url = validate_public_http_url(url)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
     checkout = Path(tempfile.mkdtemp(prefix="kspr-git-"))
     try:
         subprocess.run(["git", "clone", "--depth", "1", "--no-tags", url, str(checkout)], check=True, capture_output=True, text=True, timeout=120)
@@ -266,9 +277,13 @@ async def ingest_git(payload: dict):
 
 async def execute(request: AnalysisRequest, headers: dict[str, str], queue: asyncio.Queue | None = None):
     async def progress(value: int, stage: str, message: str):
-        if queue: await queue.put({"type": "progress", "progress": {"status": "running", "progress": value, "stage": stage, "message": message}})
+        if queue:
+            event = SessionEvent(type="tool.progress", status=stage, progress=value, payload={"message": message})
+            await queue.put({"type": "progress", "event": event.model_dump(mode="json"), "progress": {"status": "running", "progress": value, "stage": stage, "message": message}})
     async def token(delta: str):
-        if queue: await queue.put({"type": "delta", "text": delta})
+        if queue:
+            event = SessionEvent(type="message.delta", payload={"text": delta})
+            await queue.put({"type": "delta", "event": event.model_dump(mode="json"), "text": delta})
     return await analyze(request, settings, progress, headers.get("X-KSPR-API-Key") or headers.get("X-Gemini-API-Key"), headers.get("X-KSPR-BASE-URL"), headers.get("X-KSPR-AUTH-MODE", "api_key"), token if queue else None)
 
 
@@ -288,8 +303,8 @@ async def analyze_stream(request: AnalysisRequest, x_kspr_api_key: str | None = 
         try:
             while True:
                 if task.done():
-                    try: result = task.result(); yield f"data: {json.dumps({'type':'result','result':result.model_dump(mode='json')}, ensure_ascii=False)}\n\n"; break
-                    except Exception as exc: yield f"data: {json.dumps({'type':'error','message':str(exc)}, ensure_ascii=False)}\n\n"; break
+                    try: result = task.result(); yield f"data: {json.dumps({'type':'result','event': SessionEvent(type='session.completed').model_dump(mode='json'),'result':result.model_dump(mode='json')}, ensure_ascii=False)}\n\n"; break
+                    except Exception as exc: yield f"data: {json.dumps({'type':'error','event': SessionEvent(type='session.failed', payload={'message': str(exc)}).model_dump(mode='json'),'message':str(exc)}, ensure_ascii=False)}\n\n"; break
                 event = await queue.get(); yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
         finally:
             if not task.done(): task.cancel()
@@ -361,7 +376,7 @@ async def decompilate_sources(
     for file in files:
         filename = Path(file.filename or "upload.txt").name
         target = decompiler.staging_dir / f"{secrets.token_hex(8)}-{filename}"
-        raw = await file.read()
+        raw = await file.read(MAX_FILE + 1)
         if len(raw) > MAX_FILE:
             raise HTTPException(413, "Cada archivo de decompilación está limitado a 2 MB")
         target.write_bytes(raw)
@@ -370,16 +385,10 @@ async def decompilate_sources(
         candidate = link.strip()
         if not candidate:
             continue
-        parsed = urlparse(candidate)
-        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
-            raise HTTPException(400, "Solo se admiten enlaces HTTP(S) válidos")
         try:
-            address = ipaddress.ip_address(parsed.hostname)
-            if not address.is_global:
-                raise HTTPException(400, "No se permiten direcciones privadas en enlaces remotos")
-        except ValueError:
-            if parsed.hostname in {"localhost", "127.0.0.1", "::1"} or parsed.hostname.endswith(".local"):
-                raise HTTPException(400, "No se permiten hosts locales en enlaces remotos")
+            candidate = validate_public_http_url(candidate)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
         ingested.append(await asyncio.to_thread(decompiler.ingest_source, candidate))
     combined = "\n\n".join(f"SOURCE: {item['source']}\n{item.get('content', '')}" for item in ingested if item.get("success"))
     try:
@@ -474,7 +483,7 @@ async def create_project(payload: dict):
     raw_path = str(payload.get("path", "")).strip()
     if not name and not raw_path:
         raise HTTPException(400, "Indica un nombre o ruta de proyecto")
-    path = Path(raw_path).expanduser().resolve() if raw_path else (Path.cwd() / "workspace" / name).resolve()
+    path = validated_source_path(raw_path) if raw_path else validated_source_path(str((KSPR_DIR / "workspace" / name).resolve()))
     path.mkdir(parents=True, exist_ok=True)
     projects = _read_json_file(PROJECTS_FILE, [])
     entry = {"name": name or path.name, "path": str(path)}

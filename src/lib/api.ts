@@ -47,6 +47,16 @@ export type AnalysisProgress = {
   message: string;
 };
 
+export type SessionEvent = {
+  type: "session.started" | "message.delta" | "tool.progress" | "session.completed" | "session.failed";
+  session_id?: string;
+  tool?: string;
+  status?: string;
+  progress?: number;
+  text?: string;
+  message?: string;
+};
+
 export type InverseEvidence = {
   id: string;
   kind: "text" | "source" | "image" | "document" | "observation" | "constraint" | "hypothesis";
@@ -87,7 +97,13 @@ export async function reconstructSubject(payload: InverseEngineeringRequest): Pr
 
 function apiUrl() {
   const runtime = (window as Window & { __KSPR_RUNTIME_CONFIG__?: { host: string; port: number } }).__KSPR_RUNTIME_CONFIG__;
-  return import.meta.env.VITE_API_URL || (runtime ? `http://${runtime.host}:${runtime.port}` : "");
+  const configured = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/+$/, "");
+  if (configured) return configured;
+  if (runtime) return `http://${runtime.host}:${runtime.port}`;
+  if (window.location.hostname.endsWith(".vercel.app")) {
+    throw new Error("Backend no configurado: define VITE_API_URL en Vercel para conectar KSPR con la API.");
+  }
+  return window.location.origin;
 }
 
 async function parse<T>(response: Response): Promise<T> {
@@ -319,6 +335,10 @@ export type ProjectRecord = { id?: string; name: string; path: string; updated_a
 
 export async function listSessions(): Promise<{ sessions: PersistedSession[] }> {
   return parse(await fetch(apiUrl() + "/api/v1/sessions", { headers: providerHeaders() }));
+}
+
+export async function getSession(id: string): Promise<PersistedSession> {
+  return parse(await fetch(apiUrl() + "/api/v1/sessions/" + encodeURIComponent(id), { headers: providerHeaders() }));
 }
 
 export async function saveSession(session: PersistedSession): Promise<PersistedSession> {

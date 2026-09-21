@@ -7,6 +7,7 @@ from typing import Any
 import httpx
 
 from .models import MCPServerConfig, MCPTool, MCPToolResult
+from .network import validate_public_http_url
 
 
 class MCPClient:
@@ -24,8 +25,9 @@ class MCPClient:
         if not self.config.url:
             return False
         try:
+            url = validate_public_http_url(self.config.url)
             async with httpx.AsyncClient(timeout=10) as client:
-                response = await client.post(self.config.url.rstrip("/"), json={"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}})
+                response = await client.post(url.rstrip("/"), json={"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}})
             data = response.json()
             self._tools = [MCPTool(name=item.get("name", ""), description=item.get("description", ""), input_schema=item.get("inputSchema", item.get("parameters", {})), server=self.name) for item in data.get("result", {}).get("tools", [])]
             self.connected = response.is_success and "result" in data
@@ -40,8 +42,9 @@ class MCPClient:
         if not self.config.url:
             return MCPToolResult(tool_name=name, error=f"Local MCP execution not supported for '{self.name}'")
         try:
+            url = validate_public_http_url(self.config.url)
             async with httpx.AsyncClient(timeout=60) as client:
-                response = await client.post(self.config.url.rstrip("/"), json={"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": name, "arguments": arguments}})
+                response = await client.post(url.rstrip("/"), json={"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": name, "arguments": arguments}})
             data = response.json()
             if "result" in data:
                 return MCPToolResult(tool_name=name, result=data["result"])
