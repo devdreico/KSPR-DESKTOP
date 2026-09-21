@@ -1,7 +1,0 @@
-<!DOCTYPE RCC>
-<RCC version="1.0">
-    <qresource prefix="/">
-        <file>desktop-app-icon.png</file>
-        <file>kspr-main-logo.png</file>
-    </qresource>
-</RCC>
