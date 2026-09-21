@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.env
 desktop/src-tauri/target/
 desktop/src-tauri/binaries/
 *.pyc
