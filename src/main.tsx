@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { invoke } from "@tauri-apps/api/core";
 import { Studio } from "./pages/Studio";
-import { Landing } from "./pages/Landing";
+import { AccessBlock } from "./components/AccessBlock";
 import "./styles.css";
 
 type RuntimeConfig = { host: string; port: number; token: string };
@@ -46,7 +46,5 @@ const browser = window as TauriWindow;
 if (browser.__TAURI_INTERNALS__) {
   void boot();
 } else {
-  // Docker/web mode serves the same authenticated Studio as the desktop shell.
-  // Landing remains available through the dedicated marketing route if needed.
-  ReactDOM.createRoot(document.getElementById("root")!).render(<React.StrictMode><Studio /></React.StrictMode>);
+  ReactDOM.createRoot(document.getElementById("root")!).render(<React.StrictMode><AccessBlock /></React.StrictMode>);
 }
